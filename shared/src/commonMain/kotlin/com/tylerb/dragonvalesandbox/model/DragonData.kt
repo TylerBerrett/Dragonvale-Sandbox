@@ -31,7 +31,7 @@ object DragonResponseSerializer : KSerializer<DragonResponse> {
         // Extract and remove name property
         val details = json.toMutableMap()
 
-        val dragons = json.values.map {
+        val dragons = details.values.map {
             jsonIgnore.decodeFromJsonElement<DragonData>(it)
         }
 

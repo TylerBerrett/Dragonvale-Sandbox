@@ -21,7 +21,7 @@ sealed class Result<out R> {
     }
 }
 
-inline fun <T> resultRunCatching(block: () -> T): Result<T> {
+inline fun <T> myResultRunCatching(block: () -> T): Result<T> {
     return try {
         Result.Success(block())
     } catch (e: Exception) {

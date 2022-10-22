@@ -1,28 +1,23 @@
 package com.tylerb.dragonvalesandbox.android
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.tylerb.dragonvalesandbox.Greeting
-import android.widget.TextView
-import com.tylerb.dragonvalesandbox.api.DragonApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import com.tylerb.dragonvalesandbox.android.ui.theme.DragonTheme
+import com.tylerb.dragonvalesandbox.android.view.MainScreen
+import dagger.hilt.android.AndroidEntryPoint
 
-fun greet(): String {
-    return Greeting().greeting()
-}
-
-class MainActivity : AppCompatActivity() {
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
-        GlobalScope.launch {
-            DragonApi().getDragonList()
+        setContent {
+            DragonTheme {
+                MainScreen(modifier = Modifier.fillMaxSize())
+            }
         }
-
-
-        val tv: TextView = findViewById(R.id.text_view)
-        tv.text = greet()
     }
 }
