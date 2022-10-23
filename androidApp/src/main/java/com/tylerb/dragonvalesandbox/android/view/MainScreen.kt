@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.tylerb.dragonvalesandbox.api.DragonApi
+import com.tylerb.dragonvalesandbox.breedCalc
 import com.tylerb.dragonvalesandbox.model.DragonData
 import com.tylerb.dragonvalesandbox.util.Result
 import com.tylerb.dragonvalesandbox.util.myResultRunCatching
@@ -24,50 +25,20 @@ import com.tylerb.dragonvalesandbox.util.myResultRunCatching
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
 
-    var dragons: Result<List<DragonData>> by remember { mutableStateOf(Result.Loading) }
+    var dragonsReult: Result<List<DragonData>> by remember { mutableStateOf(Result.Loading) }
 
     LaunchedEffect(key1 = Unit) {
-        dragons = myResultRunCatching { DragonApi().getDragonList() }
+        dragonsReult = myResultRunCatching { DragonApi().getDragonList() }
+    }
 
+    dragonsReult.onSuccess {
+        SandboxScreen(
+            modifier = modifier,
+            dragons = it
+        )
     }
 
 
-    LazyVerticalGrid(
-        modifier = modifier,
-        columns = GridCells.Adaptive(minSize = 128.dp)
-    ) {
-        dragons.onSuccess { data ->
-            items(data) { dragon ->
-                Card(
-                    modifier = Modifier
-                        .size(128.dp)
-                        .padding(4.dp)
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        AsyncImage(
-                            modifier = Modifier.size(80.dp),
-                            model = "https://dvboxcdn.com/dragons/${dragon.image}",
-                            contentDescription = null
-                        )
-                        Spacer(modifier = Modifier.padding(top = 4.dp))
-                        Text(
-                            text = dragon.name,
-                            fontSize = 16.sp
-                        )
-                    }
-                }
-
-
-
-            }
-        }
-
-
-
-    }
 
 
 }

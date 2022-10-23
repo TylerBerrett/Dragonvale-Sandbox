@@ -72,7 +72,47 @@ data class DragonData(
     val weight: DragonWeight? = null,
     @SerialName("x-breed_note")
     val xBreedNote: String? = null
-)
+) {
+
+    // do I need it to be a map?
+    val tags: Map<String, Int>
+        get() {
+            val tags = mutableMapOf(name to 1, type to 1,)
+            elements?.forEach { tags[it] = 1 }
+            latent?.forEach { tags[it] = 1 }
+            rifty?.let { tags[it] = 1 }
+            return tags
+        }
+
+    val reqsCompiled: List<Map<String, Int>>
+        get() {
+
+            val list: List<List<String>> = if (evolved == "yes") {
+                val clone = listOf("d1.$name", "d2.$name")
+                listOf(listOf(clone), reqs).flatten()
+            } else {
+                val clone = listOf(name)
+                listOf(listOf(clone), reqs).flatten()
+            }
+
+
+            val reqs = ArrayList<Map<String, Int>>()
+            list.forEach { set ->
+                val req = mutableMapOf<String, Int>()
+                set.forEach { tag ->
+                    req[tag] = 1
+                }
+                if (type == "rift") {
+                    req["d1.rifty"] = 1
+                    req["d2.rifty"] = 1
+                }
+                reqs.add(req)
+            }
+
+            return reqs
+        }
+
+}
 
 @Serializable
 data class DragonWeight(
