@@ -1,20 +1,18 @@
 package com.tylerb.dragonvalesandbox.android.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.darkColors
-import androidx.compose.material.lightColors
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-private val DarkColorPalette = darkColors(
+private val DarkColorPalette = darkColorScheme(
     primary = Purple200,
-    primaryVariant = Purple500,
     secondary = Purple700
 )
 
-private val LightColorPalette = lightColors(
+private val LightColorPalette = lightColorScheme(
     primary = Purple200,
-    primaryVariant = Purple500,
     secondary = Purple700
 )
 
@@ -27,7 +25,7 @@ fun DragonTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable
     }
 
     MaterialTheme(
-        colors = colors,
+        colorScheme = colors,
         typography = Typography,
         shapes = Shapes,
         content = content
