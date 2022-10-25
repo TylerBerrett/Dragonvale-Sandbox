@@ -1,16 +1,12 @@
 package com.tylerb.dragonvalesandbox.android.view.sandbox
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tylerb.dragonvalesandbox.api.DragonApi
 import com.tylerb.dragonvalesandbox.breedCalc
 import com.tylerb.dragonvalesandbox.model.DragonData
-import com.tylerb.dragonvalesandbox.util.Result
 import com.tylerb.dragonvalesandbox.util.myResultRunCatching
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -26,6 +22,18 @@ class SandboxViewModel @Inject constructor() : ViewModel() {
         None;
     }
 
+    enum class FilterName {
+        Beb,
+        Upgraded,
+        Rift;
+    }
+
+    data class Filters(
+        val beb: Boolean = false,
+        val upgraded: Boolean = false,
+        val rift: Boolean = false
+    )
+
     data class SandboxUiState(
         val initLoading: Boolean = true,
         val initFailure: Boolean = false,
@@ -34,7 +42,7 @@ class SandboxViewModel @Inject constructor() : ViewModel() {
         val dragonTwo: String = "Hydra",
         val whichDragon: WhichDragon = WhichDragon.None,
         val searchQuery: String = "",
-        val beb: Boolean = false,
+        val filters: Filters = Filters(),
         val resultDragons: List<DragonData> = listOf(),
     )
 
@@ -83,10 +91,25 @@ class SandboxViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun onBebChecked(selected: Boolean) {
+    fun onFilterChecked(filter: FilterName) {
+
+        val currentFilters = _uiState.value.filters
+        val filters = when(filter) {
+            FilterName.Beb -> currentFilters.copy(beb = !currentFilters.beb)
+            FilterName.Upgraded -> currentFilters.copy(
+                upgraded = !currentFilters.upgraded,
+                rift = false
+            )
+            FilterName.Rift -> currentFilters.copy(
+                rift = !currentFilters.rift,
+                upgraded = false
+            )
+        }
+
         _uiState.value = _uiState.value.copy(
-            beb = selected
+            filters = filters
         )
+
         getChilds()
     }
 
@@ -113,7 +136,7 @@ class SandboxViewModel @Inject constructor() : ViewModel() {
         val dragonOne = allDragons.find { it.name == _uiState.value.dragonOne }!!
         val dragonTwo = allDragons.find { it.name == _uiState.value.dragonTwo }!!
 
-        val childs = allDragons.breedCalc(dragonOne, dragonTwo, _uiState.value.beb)
+        val childs = allDragons.breedCalc(dragonOne, dragonTwo, _uiState.value.filters.beb)
 
         _uiState.value = _uiState.value.copy(
             resultDragons = childs ?: emptyList()

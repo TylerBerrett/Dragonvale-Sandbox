@@ -16,24 +16,19 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.tylerb.dragonvalesandbox.android.R
 import com.tylerb.dragonvalesandbox.android.view.AllDragonsScreen
 import com.tylerb.dragonvalesandbox.model.DragonData
 import kotlinx.coroutines.launch
@@ -62,21 +57,16 @@ fun SandboxScreen(
             onDragonSelected = viewModel::onDragonSelected,
             searchQuery = uiState.searchQuery,
             onSearch = viewModel::onSearch,
-            beb = uiState.beb,
-            onBebChecked = viewModel::onBebChecked,
+            filters = uiState.filters,
+            onFilterChecked = viewModel::onFilterChecked,
             childs = uiState.resultDragons
         )
     }
 
 
-
-
-
-
 }
 
 @OptIn(
-    ExperimentalFoundationApi::class,
     ExperimentalMaterialApi::class,
     ExperimentalMaterial3Api::class
 )
@@ -90,15 +80,16 @@ fun SandboxContent(
     onDragonSelected: (DragonData) -> Unit,
     searchQuery: String,
     onSearch: (String) -> Unit,
-    beb: Boolean,
-    onBebChecked: (Boolean) -> Unit,
+    filters: SandboxViewModel.Filters,
+    onFilterChecked: (SandboxViewModel.FilterName) -> Unit,
     childs: List<DragonData>
 ) {
 
     val coroutineScope = rememberCoroutineScope()
 
     val bottomSheetState = rememberModalBottomSheetState(
-        initialValue = ModalBottomSheetValue.Hidden
+        initialValue = ModalBottomSheetValue.Hidden,
+        skipHalfExpanded = true
     )
 
     BackHandler(bottomSheetState.isVisible) {
@@ -128,48 +119,68 @@ fun SandboxContent(
             sheetBackgroundColor = MaterialTheme.colorScheme.background,
             sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
         ) {
-            Column(
+            AllDragonsScreen(
                 modifier = modifier.padding(contentPadding),
-                horizontalAlignment = Alignment.CenterHorizontally
+                dragons = childs
             ) {
-
-                Image(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .background(
-                            Color.LightGray.copy(alpha = .25f),
-                            shape = RoundedCornerShape(50)
-                        )
-                        .padding(8.dp),
-                    painter = painterResource(id = R.drawable.breeding_cave),
-                    contentDescription = null
-                )
-
-                DragonSelectionButton(modifier = Modifier.fillMaxWidth(), dragonOne) {
+                DragonSearchHeader(
+                    modifier = Modifier.padding(16.dp),
+                    dragonOne = dragonOne,
+                    dragonTwo = dragonTwo,
+                    filters = filters,
+                    onFilterChecked = onFilterChecked,
+                ) {
                     coroutineScope.launch {
-                        onWhichDragon(SandboxViewModel.WhichDragon.One)
+                        onWhichDragon(it)
                         bottomSheetState.show()
                     }
                 }
-
-                DragonSelectionButton(modifier = Modifier.fillMaxWidth(), dragonTwo) {
-                    coroutineScope.launch {
-                        onWhichDragon(SandboxViewModel.WhichDragon.Two)
-                        bottomSheetState.show()
-                    }
-                }
-
-                Row {
-                    CheckBoxWithText(
-                        text = "Bring 'em Back",
-                        isChecked = beb,
-                        onCheck = onBebChecked
-                    )
-                }
-
-                AllDragonsScreen(dragons = childs)
-
             }
+        }
+    }
+}
+
+@Composable
+fun DragonSearchHeader(
+    modifier: Modifier = Modifier,
+    dragonOne: String,
+    dragonTwo: String,
+    filters: SandboxViewModel.Filters,
+    onFilterChecked: (SandboxViewModel.FilterName) -> Unit,
+    onClick: (SandboxViewModel.WhichDragon) -> Unit
+) {
+    Column(
+        modifier = modifier
+    ) {
+
+        DragonSelectionButton(modifier = Modifier.fillMaxWidth(), dragonOne) {
+            onClick(SandboxViewModel.WhichDragon.One)
+        }
+
+        DragonSelectionButton(modifier = Modifier.fillMaxWidth(), dragonTwo) {
+            onClick(SandboxViewModel.WhichDragon.Two)
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Column {
+            CheckBoxWithText(
+                text = "Bring 'em Back",
+                isChecked = filters.beb,
+                onCheck = { onFilterChecked(SandboxViewModel.FilterName.Beb) }
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            CheckBoxWithText(
+                text = "Upgraded Breeding",
+                isChecked = filters.upgraded,
+                onCheck = { onFilterChecked(SandboxViewModel.FilterName.Upgraded) }
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            CheckBoxWithText(
+                text = "Rift Breeding",
+                isChecked = filters.rift,
+                onCheck = { onFilterChecked(SandboxViewModel.FilterName.Rift) }
+            )
         }
     }
 }
@@ -182,7 +193,7 @@ fun DragonSelectionButton(
 ) {
 
     OutlinedButton(
-        modifier = modifier.padding(horizontal = 16.dp),
+        modifier = modifier,
         shape = RoundedCornerShape(8.dp),
         onClick = onClick
     ) {

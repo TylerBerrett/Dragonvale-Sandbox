@@ -79,4 +79,5 @@ android {
         minSdk = 28
         targetSdk = 32
     }
+    namespace = "com.tylerb.dragonvalesandbox"
 }
