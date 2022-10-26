@@ -4,6 +4,7 @@ import com.tylerb.dragonvalesandbox.util.jsonIgnore
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
@@ -74,6 +75,26 @@ data class DragonData(
     val xBreedNote: String? = null
 ) {
 
+    companion object {
+        private const val DRAGONS_URL = "https://dvboxcdn.com/dragons/"
+        private const val FLAGS_URL = "https://dvboxcdn.com/flags/"
+    }
+
+    @Transient
+    var percent: Double = 0.0
+
+    @Transient
+    var dhms: String = ""
+
+    val imageUrl: String
+        get() = "$DRAGONS_URL$image"
+
+    val eggIconUrl: String
+        get() = "$DRAGONS_URL$eggIcon"
+
+    val flagImageUrls: List<String>
+        get() = elements?.map { "$FLAGS_URL$it.png" } ?: emptyList()
+
     // do I need it to be a map?
     val tags: Map<String, Int>
         get() {
@@ -111,6 +132,11 @@ data class DragonData(
 
             return reqs
         }
+
+    val weightByType: Double
+        get() = if (type == "epic") 3.02 else 3.75
+
+
 
 }
 

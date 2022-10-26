@@ -40,9 +40,7 @@ fun SandboxScreen(
     viewModel: SandboxViewModel = hiltViewModel()
 ) {
 
-
     val uiState by viewModel.uiState.collectAsState()
-
 
     if (uiState.initLoading) {
         CircularProgressIndicator()
@@ -59,7 +57,7 @@ fun SandboxScreen(
             onSearch = viewModel::onSearch,
             filters = uiState.filters,
             onFilterChecked = viewModel::onFilterChecked,
-            childs = uiState.resultDragons
+            spawn = uiState.spawn
         )
     }
 
@@ -82,7 +80,7 @@ fun SandboxContent(
     onSearch: (String) -> Unit,
     filters: SandboxViewModel.Filters,
     onFilterChecked: (SandboxViewModel.FilterName) -> Unit,
-    childs: List<DragonData>
+    spawn: List<DragonData>
 ) {
 
     val coroutineScope = rememberCoroutineScope()
@@ -121,7 +119,7 @@ fun SandboxContent(
         ) {
             AllDragonsScreen(
                 modifier = modifier.padding(contentPadding),
-                dragons = childs
+                dragons = spawn
             ) {
                 DragonSearchHeader(
                     modifier = Modifier.padding(16.dp),
@@ -172,8 +170,8 @@ fun DragonSearchHeader(
             Spacer(modifier = Modifier.height(4.dp))
             CheckBoxWithText(
                 text = "Upgraded Breeding",
-                isChecked = filters.upgraded,
-                onCheck = { onFilterChecked(SandboxViewModel.FilterName.Upgraded) }
+                isChecked = filters.fast,
+                onCheck = { onFilterChecked(SandboxViewModel.FilterName.Fast) }
             )
             Spacer(modifier = Modifier.height(4.dp))
             CheckBoxWithText(

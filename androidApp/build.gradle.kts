@@ -69,7 +69,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion")
 
 
-
+    implementation("androidx.palette:palette:1.0.0")
 
 
     implementation("com.google.dagger:hilt-android:2.44")

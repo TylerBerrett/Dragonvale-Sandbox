@@ -1,21 +1,37 @@
 package com.tylerb.dragonvalesandbox.android.view
 
-import androidx.compose.foundation.Image
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tylerb.dragonvalesandbox.android.R
+import androidx.palette.graphics.Palette
 import coil.compose.AsyncImage
-import com.tylerb.dragonvalesandbox.android.view.util.DragonDataPreview
 import com.tylerb.dragonvalesandbox.model.DragonData
+
+
+fun calcDominantColor(drawable: Drawable, onFinish: (Color) -> Unit) {
+    val bmp = (drawable as BitmapDrawable).bitmap.copy(Bitmap.Config.ARGB_8888, true)
+
+    Palette.from(bmp).generate { palette ->
+        palette?.dominantSwatch?.rgb?.let { colorValue ->
+            onFinish(Color(colorValue))
+        }
+    }
+
+}
 
 @Composable
 fun AllDragonsScreen(
@@ -27,7 +43,7 @@ fun AllDragonsScreen(
 
     LazyVerticalGrid(
         modifier = modifier,
-        columns = GridCells.Adaptive(minSize = 128.dp)
+        columns = GridCells.Adaptive(minSize = 136.dp)
     ) {
 
         item(
@@ -42,40 +58,68 @@ fun AllDragonsScreen(
             items = dragons,
             key = { it.name }
         ) { dragon ->
+
+            val defaultColor = MaterialTheme.colorScheme.surface
+
+            var cardColor by remember { mutableStateOf(defaultColor) }
+
             Card(
-                modifier = Modifier
-                    .size(256.dp)
-                    .padding(4.dp)
+                colors = CardDefaults.cardColors(),
+                modifier = Modifier.size (264.dp).padding(4.dp),
             ) {
                 Column(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    cardColor,
+                                    defaultColor
+                                )
+                            )
+                        )
+                    ,
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     AsyncImage(
                         modifier = Modifier.size(80.dp),
-                        model = "https://dvboxcdn.com/dragons/${dragon.image}",
-                        placeholder = painterResource(id = R.drawable.placeholder_dragon),
-                        contentDescription = null
+                        model = dragon.imageUrl,
+                        contentDescription = null,
+                        onSuccess = {
+                            calcDominantColor(it.result.drawable) { color ->
+                                cardColor = color
+                            }
+
+                        }
                     )
                     AsyncImage(
                         modifier = Modifier.size(50.dp),
-                        model = "https://dvboxcdn.com/dragons/${dragon.eggIcon}",
-                        placeholder = painterResource(id = R.drawable.placeholder_egg),
+                        model = dragon.eggIconUrl,
                         contentDescription = null
                     )
+                    Spacer(modifier = Modifier.padding(top = 4.dp))
+                    Row {
+                       dragon.flagImageUrls.forEach { flagUrl ->
+                           AsyncImage(
+                               modifier = Modifier.size(24.dp),
+                               model = flagUrl,
+                               contentDescription = null
+                           )
+                       }
+                    }
                     Spacer(modifier = Modifier.padding(top = 4.dp))
                     Text(
                         text = dragon.name,
                         fontSize = 16.sp
                     )
                     Text(
-                        text = "14:00:00",
+                        text = dragon.dhms,
                         fontSize = 16.sp
                     )
                     if (showPercent) {
                         Text(
-                            text = "6.6%",
+                            text = "${dragon.percent}%",
                             fontSize = 16.sp
                         )
                     }
@@ -90,18 +134,4 @@ fun AllDragonsScreen(
     }
 
 
-}
-
-@Composable
-@Preview
-fun AllDragonsScreenPreview() {
-
-    val dragonPreview = (0..30).map { DragonDataPreview.blueFireDragon.copy(name = DragonDataPreview.blueFireDragon.name + it) }
-
-    AllDragonsScreen(
-        modifier = Modifier.fillMaxSize(),
-        dragons = dragonPreview
-    ) {
-
-    }
 }

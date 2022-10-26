@@ -1,6 +1,10 @@
 package com.tylerb.dragonvalesandbox
 
 import com.tylerb.dragonvalesandbox.model.DragonData
+import kotlin.math.roundToInt
+
+// TODO: this would probably be easier to maintain if I host it instead
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // configuration
@@ -10,6 +14,11 @@ val weight = mapOf(
     "primary" to 2,
     "default" to 1
 )
+
+enum class WeightByClone(val weight: Double) {
+    Both(27.81),
+    Single(2.45);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // is element
@@ -76,35 +85,43 @@ fun defAndEq(a: String?, b: String?): Boolean {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // breed two dragons
 
-fun List<DragonData>.breedCalc(d1: DragonData, d2: DragonData, beb: Boolean): List<DragonData>? {
+fun List<DragonData>.breedCalc(
+    d1: DragonData,
+    d2: DragonData,
+    beb: Boolean,
+    fast: Boolean
+): List<DragonData>? {
     val allDragons = this
     val query = breedQuery(d1, d2, beb)
-    var list: MutableList<DragonData> = mutableListOf()
+    var spawn: MutableList<DragonData> = mutableListOf()
 
     when {
         oppositePrimary(query) -> {
             // opposite primaries cannot be bred directly
         }
         samePrimary(query) -> {
-            list = primaryDragons(query.elements).map { dragonName ->
+            spawn = primaryDragons(query.elements).map { dragonName ->
                 allDragons.find { it.name == dragonName }!!
             }.toMutableList()
         }
         else -> {
             if (oppositeElements(query)) {
-                list = primaryDragons(query.elements).map { dragonName ->
+                spawn = primaryDragons(query.elements).map { dragonName ->
                     allDragons.find { it.name == dragonName }!!
                 }.toMutableList()
             }
             allDragons.forEach { dragon ->
                 if (breedable(dragon, query)) {
-                    list.add(dragon)
+                    spawn.add(dragon)
                 }
             }
         }
     }
 
-    return if (list.size > 0) list else null
+    spawn = weightCalc(d1, d2, spawn).toMutableList()
+    spawn.forEach { it.dhms = fmtBreedTime(it, fast) }
+
+    return if (spawn.size > 0) spawn.sortedBy { it.time } else null
 
 
 }
@@ -277,6 +294,74 @@ fun checkAvailable(dragonData: DragonData, query: Query): Boolean {
 // compile requirements
 /** @see DragonData.reqsCompiled  **/
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// weighted breed list
+
+fun weightCalc(d1: DragonData, d2: DragonData, spawn: List<DragonData>): List<DragonData> {
+    var total = 0.0
+    val weighted = mutableMapOf<DragonData, Double>()
+
+    // TODO: handle rift breeding
+    spawn.forEach { dragon ->
+        val weight = if (dragon == d1 && dragon == d2) {
+            dragon.weight?.cloneBoth ?: WeightByClone.Both.weight
+        } else if (dragon == d1 || dragon == d2) {
+            dragon.weight?.cloneSingle ?: WeightByClone.Single.weight
+        } else {
+            dragon.weight?.breed ?: dragon.weightByType
+        }
+
+        weighted[dragon] = weight
+
+        total += weight
+
+
+
+    }
+
+    spawn.forEach {
+        it.percent = (((weighted[it]!! / total) * 100) * 10).roundToInt() / 10.0
+    }
+
+    return spawn.filter { it.percent > 0.0 }
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// format breed time
+
+fun fmtBreedTime(dragon: DragonData, fast: Boolean): String {
+    return fmtDhms(dragon.time * if (fast) 0.8 else 1.0)
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// format day:hour:min:sec
+
+fun fmtDhms(time: Double): String {
+
+    fun Int.format(): String = if (this in 0..9) "0$this" else "$this"
+
+    var t = time
+    val days = if (t > 86400) {
+        val d =  (t / 86400).toInt()
+        t %= 86400
+        d
+    } else null
+
+    val hours = (t / 3600).toInt()
+    t %= 3600
+
+    val minutes = (t / 60).toInt()
+    t %= 60
+
+    val seconds = t.toInt()
+
+    val dayString = if (days.notNull) "$days:" else ""
+    val hourString = if (days.notNull) "${hours.format()}:" else if (hours > 0) "$hours:" else ""
+
+    return "$dayString$hourString${minutes.format()}:${seconds.format()}"
+
+}
 
 
 

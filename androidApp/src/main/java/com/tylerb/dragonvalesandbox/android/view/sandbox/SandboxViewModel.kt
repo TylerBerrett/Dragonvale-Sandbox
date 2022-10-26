@@ -24,13 +24,13 @@ class SandboxViewModel @Inject constructor() : ViewModel() {
 
     enum class FilterName {
         Beb,
-        Upgraded,
+        Fast,
         Rift;
     }
 
     data class Filters(
         val beb: Boolean = false,
-        val upgraded: Boolean = false,
+        val fast: Boolean = false,
         val rift: Boolean = false
     )
 
@@ -43,7 +43,7 @@ class SandboxViewModel @Inject constructor() : ViewModel() {
         val whichDragon: WhichDragon = WhichDragon.None,
         val searchQuery: String = "",
         val filters: Filters = Filters(),
-        val resultDragons: List<DragonData> = listOf(),
+        val spawn: List<DragonData> = listOf(),
     )
 
     private val _uiState = MutableStateFlow(SandboxUiState())
@@ -62,7 +62,7 @@ class SandboxViewModel @Inject constructor() : ViewModel() {
                         initLoading = false,
                         dragons = dragons
                     )
-                    getChilds()
+                    getSpawn()
                 }
                 .onFailure {
                     _uiState.value = _uiState.value.copy(
@@ -96,13 +96,13 @@ class SandboxViewModel @Inject constructor() : ViewModel() {
         val currentFilters = _uiState.value.filters
         val filters = when(filter) {
             FilterName.Beb -> currentFilters.copy(beb = !currentFilters.beb)
-            FilterName.Upgraded -> currentFilters.copy(
-                upgraded = !currentFilters.upgraded,
+            FilterName.Fast -> currentFilters.copy(
+                fast = !currentFilters.fast,
                 rift = false
             )
             FilterName.Rift -> currentFilters.copy(
                 rift = !currentFilters.rift,
-                upgraded = false
+                fast = false
             )
         }
 
@@ -110,7 +110,7 @@ class SandboxViewModel @Inject constructor() : ViewModel() {
             filters = filters
         )
 
-        getChilds()
+        getSpawn()
     }
 
     fun onWhichDragon(whichDragon: WhichDragon) {
@@ -128,22 +128,24 @@ class SandboxViewModel @Inject constructor() : ViewModel() {
                 dragonData.name
             } else _uiState.value.dragonTwo
         )
-        getChilds()
+        getSpawn()
     }
 
-    private fun getChilds() {
+    private fun getSpawn() {
         if (allDragons.isEmpty()) return
         val dragonOne = allDragons.find { it.name == _uiState.value.dragonOne }!!
         val dragonTwo = allDragons.find { it.name == _uiState.value.dragonTwo }!!
 
-        val childs = allDragons.breedCalc(dragonOne, dragonTwo, _uiState.value.filters.beb)
-
-        _uiState.value = _uiState.value.copy(
-            resultDragons = childs ?: emptyList()
+        val spawn = allDragons.breedCalc(
+            dragonOne,
+            dragonTwo,
+            _uiState.value.filters.beb,
+            _uiState.value.filters.fast
         )
 
-
-
+        _uiState.value = _uiState.value.copy(
+            spawn = spawn ?: emptyList()
+        )
 
     }
 
