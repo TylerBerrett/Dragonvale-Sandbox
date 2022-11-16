@@ -2,8 +2,7 @@ package com.tylerb.dragonvalesandbox.android.view.sandbox
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tylerb.dragonvalesandbox.api.DragonApi
-import com.tylerb.dragonvalesandbox.breedCalc
+import com.tylerb.dragonvalesandbox.SharedRepository
 import com.tylerb.dragonvalesandbox.model.DragonData
 import com.tylerb.dragonvalesandbox.util.myResultRunCatching
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +13,9 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class SandboxViewModel @Inject constructor() : ViewModel() {
+class SandboxViewModel @Inject constructor(
+    private val sharedRepository: SharedRepository
+) : ViewModel() {
 
     enum class WhichDragon {
         One,
@@ -55,7 +56,7 @@ class SandboxViewModel @Inject constructor() : ViewModel() {
 
     init {
         viewModelScope.launch {
-            myResultRunCatching { DragonApi().getDragonList() }
+            myResultRunCatching { sharedRepository.getDragonList() }
                 .onSuccess { dragons ->
                     allDragons.addAll(dragons)
                     _uiState.value = _uiState.value.copy(
@@ -136,7 +137,8 @@ class SandboxViewModel @Inject constructor() : ViewModel() {
         val dragonOne = allDragons.find { it.name == _uiState.value.dragonOne }!!
         val dragonTwo = allDragons.find { it.name == _uiState.value.dragonTwo }!!
 
-        val spawn = allDragons.breedCalc(
+        val spawn = sharedRepository.breedCalc(
+            allDragons,
             dragonOne,
             dragonTwo,
             _uiState.value.filters.beb,
