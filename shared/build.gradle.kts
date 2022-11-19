@@ -2,6 +2,7 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
     kotlin("plugin.serialization")
+    id("com.squareup.sqldelight")
 }
 kotlin {
     android()
@@ -42,6 +43,7 @@ kotlin {
             dependencies {
                 implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
                 implementation("androidx.datastore:datastore-preferences:1.0.0")
+                implementation("com.squareup.sqldelight:android-driver:1.5.3")
             }
         }
         val androidTest by getting {
@@ -60,6 +62,7 @@ kotlin {
             iosSimulatorArm64Main.dependsOn(this)
             dependencies {
                 implementation("io.ktor:ktor-client-darwin:$ktorVersion")
+                implementation("com.squareup.sqldelight:native-driver:1.5.3")
             }
         }
         val iosX64Test by getting
@@ -82,4 +85,11 @@ android {
         targetSdk = 32
     }
     namespace = "com.tylerb.dragonvalesandbox"
+}
+
+
+sqldelight {
+    database("DragonDatabase") {
+        packageName = "com.tylerb.dragonvalesandbox.database"
+    }
 }

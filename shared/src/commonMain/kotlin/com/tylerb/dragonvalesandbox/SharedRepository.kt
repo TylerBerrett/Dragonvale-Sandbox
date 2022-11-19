@@ -1,16 +1,21 @@
 package com.tylerb.dragonvalesandbox
 
+import com.squareup.sqldelight.db.SqlDriver
 import com.tylerb.dragonvalesandbox.api.DragonApi
+import com.tylerb.dragonvalesandbox.database.Database
 import com.tylerb.dragonvalesandbox.model.DragonData
+import com.tylerb.dragonvalesandbox.model.DragonImage
 import com.tylerb.dragonvalesandbox.storage.Preferences
 import kotlinx.datetime.LocalDateTime
 
 class SharedRepository(
-    private val preferences: Preferences
+    private val preferences: Preferences,
+    sqlDriver: SqlDriver
 ) {
     private val dragonApi = DragonApi()
+    private val dragonDatabase = Database(sqlDriver)
 
-    private suspend fun needsUpdate(): Boolean {
+    private suspend fun needsUpdate(): Boolean = kotlin.runCatching {
         val lastUpdated = LocalDateTime.parse(dragonApi.checkForUpdates().removeSuffix("Z"))
 
         val needsUpdate = preferences.dateSettings.getLastUpdated()?.let { lastChecked ->
@@ -21,12 +26,24 @@ class SharedRepository(
             preferences.dateSettings.setLastUpdated(lastUpdated)
         }
 
-        return needsUpdate
+        needsUpdate
+    }.getOrDefault(false)
+
+    suspend fun imageTest(): DragonImage {
+        val r = dragonApi.getImageData(dragonDatabase.getDragonList().filter { it.name == "Fire" })
+        return r.first().values.first()
     }
 
 
-    suspend fun getDragonList(): List<DragonData> =
-        dragonApi.getDragonList()
+    suspend fun getDragonList(): List<DragonData> {
+        if (needsUpdate()) {
+            val dragons = dragonApi.getDragonList()
+            dragonDatabase.addDragonsToDb(dragons)
+        }
+
+        return dragonDatabase.getDragonList()
+    }
+
 
     fun breedCalc(
         allDragons: List<DragonData>,

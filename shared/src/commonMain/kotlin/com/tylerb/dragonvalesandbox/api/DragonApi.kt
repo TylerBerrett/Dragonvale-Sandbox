@@ -8,7 +8,13 @@ import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.util.logging.*
+import io.ktor.utils.io.*
+import io.ktor.utils.io.bits.*
+import io.ktor.utils.io.core.internal.*
+import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 
 internal class DragonApi {
@@ -37,6 +43,44 @@ internal class DragonApi {
         val body = httpClient.get(DRAGONS_URL).bodyAsText()
         val dragonResponse = jsonIgnore.decodeFromString(DragonResponseSerializer, body)
         return dragonResponse.dragons
+    }
+
+    // Can be used to cache images but takes up awhile to do so
+    @Throws(Exception::class)
+    suspend fun getImageData(dragons: List<DragonData>) = coroutineScope {
+
+        suspend fun getByteArray(url: String): ByteArray {
+            val response = httpClient.get(url)
+            val byteArray = ByteArray(response.contentLength()!!.toInt())
+            response.bodyAsChannel().readFully(byteArray)
+            return byteArray
+        }
+
+        val flagsDone = mutableMapOf<String, ByteArray>()
+        dragons.map { dragon ->
+            async {
+                val imageUrl = async { getByteArray(dragon.imageUrl) }
+                val eggUrl = async { getByteArray(dragon.eggIconUrl) }
+                val flagUrls = async {
+                    dragon.flagImageUrls.map {
+                        async {
+                            flagsDone[it] ?: kotlin.run {
+                                flagsDone[it] = getByteArray(it)
+                                flagsDone[it]!!
+                            }
+                        }
+                    }.awaitAll()
+                }
+
+                mapOf(
+                    dragon.name to DragonImage(
+                        imageUrl.await(),
+                        eggUrl.await(),
+                        flagUrls.await()
+                    )
+                )
+            }
+        }.awaitAll()
     }
 
     @Throws(Exception::class)

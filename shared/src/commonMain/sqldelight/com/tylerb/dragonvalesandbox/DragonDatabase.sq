@@ -1,0 +1,49 @@
+import kotlin.collections.List;
+
+CREATE TABLE Dragon (
+    available TEXT NOT NULL,
+    breedKey TEXT NOT NULL,
+    breedNote TEXT,
+    eggIcon TEXT NOT NULL,
+    elements TEXT AS List<String>,
+    evolved TEXT,
+    events TEXT,
+    habitats TEXT AS List<String> NOT NULL ,
+    image TEXT NOT NULL,
+    latent TEXT AS List<String>,
+    level TEXT,
+    name TEXT NOT NULL,
+    opposite TEXT,
+    isPrimary TEXT,
+    rarity TEXT NOT NULL,
+    reqs TEXT AS List<List<String>> NOT NULL,
+    rifty TEXT,
+    sell TEXT NOT NULL,
+    time REAL NOT NULL,
+    type TEXT NOT NULL,
+    xBreedNote TEXT,
+    breed REAL,
+    cloneBoth REAL,
+    cloneBothRift REAL,
+    cloneBothSocial REAL,
+    cloneSingle REAL,
+    cloneSingleRift REAL,
+    cloneSingleSocial REAL
+);
+insertDragon:
+INSERT INTO Dragon(available, breedKey, breedNote, eggIcon, elements, evolved, events, habitats, image, latent, level, name, opposite, isPrimary, rarity, reqs, rifty, sell, time, type, xBreedNote, breed, cloneBoth, cloneBothRift, cloneBothSocial, cloneSingle, cloneSingleRift, cloneSingleSocial)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+removeDragons:
+DELETE FROM Dragon;
+
+getDragons:
+SELECT * FROM Dragon;
+
+countDragons:
+SELECT count(*) FROM Dragon;
+
+getDragonsPaged:
+SELECT * FROM Dragon
+LIMIT :limit OFFSET :offset;
+

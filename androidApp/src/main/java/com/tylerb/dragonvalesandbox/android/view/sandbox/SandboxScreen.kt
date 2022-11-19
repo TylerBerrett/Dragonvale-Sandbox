@@ -174,6 +174,7 @@ fun DragonSearchHeader(
                 onCheck = { onFilterChecked(SandboxViewModel.FilterName.Fast) }
             )
             Spacer(modifier = Modifier.height(4.dp))
+            // TODO: Make this work
             CheckBoxWithText(
                 text = "Rift Breeding",
                 isChecked = filters.rift,

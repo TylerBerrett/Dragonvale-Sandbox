@@ -1,7 +1,9 @@
 package com.tylerb.dragonvalesandbox.android.di
 
 import android.content.Context
+import com.squareup.sqldelight.db.SqlDriver
 import com.tylerb.dragonvalesandbox.SharedRepository
+import com.tylerb.dragonvalesandbox.database.DatabaseDriverFactory
 import com.tylerb.dragonvalesandbox.storage.Preferences
 import dagger.Module
 import dagger.Provides
@@ -18,7 +20,11 @@ object AppModule {
         Preferences(context)
 
     @Provides
-    fun provideSharedRepo(preferences: Preferences): SharedRepository =
-        SharedRepository(preferences)
+    fun provideSqlDriver(@ApplicationContext context: Context): SqlDriver =
+        DatabaseDriverFactory(context).createDriver()
+
+    @Provides
+    fun provideSharedRepo(preferences: Preferences, sqlDriver: SqlDriver): SharedRepository =
+        SharedRepository(preferences, sqlDriver)
 
 }
