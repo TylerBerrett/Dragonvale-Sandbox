@@ -12,6 +12,7 @@ import androidx.compose.material.*
 import androidx.compose.material3.*
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -29,14 +30,18 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.tylerb.dragonvalesandbox.android.view.AllDragonsScreen
 import com.tylerb.dragonvalesandbox.model.DragonData
 import kotlinx.coroutines.launch
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SandboxScreen(
     modifier: Modifier = Modifier,
+    navController: NavController,
+    drawerState: DrawerState,
     viewModel: SandboxViewModel = hiltViewModel()
 ) {
 

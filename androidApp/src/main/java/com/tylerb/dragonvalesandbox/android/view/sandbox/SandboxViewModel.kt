@@ -6,6 +6,7 @@ import com.tylerb.dragonvalesandbox.SharedRepository
 import com.tylerb.dragonvalesandbox.model.DragonData
 import com.tylerb.dragonvalesandbox.util.myResultRunCatching
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -55,7 +56,7 @@ class SandboxViewModel @Inject constructor(
     private val allDragons = ArrayList<DragonData>()
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             myResultRunCatching { sharedRepository.getDragonList() }
                 .onSuccess { dragons ->
                     allDragons.addAll(dragons)

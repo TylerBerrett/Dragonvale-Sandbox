@@ -10,18 +10,33 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.util.*
 import io.ktor.util.logging.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.bits.*
 import io.ktor.utils.io.core.internal.*
 import kotlinx.coroutines.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalTime
 import kotlinx.serialization.json.Json
 
 internal class DragonApi {
 
     companion object {
-        private const val DRAGONS_URL = "https://dvbox2cdn.bin.sh/data/dragons.json"
+        private const val BASE_URL = "https://dvbox2cdn.bin.sh"
+        private const val DRAGONS_URL = "$BASE_URL/data/dragons.json"
+        private const val PARENT_HASH_URL = "$BASE_URL/parent/query.cgi"
+        private const val PARENT_URL = "$BASE_URL/OPUS"
+        private const val TRENDING_PARENT_URL = "$BASE_URL/data/trending.json"
         private const val GITHUB_URL = "https://api.github.com/repos/drouu/dragonvale-sandbox/commits"
+
+        private const val SPAWN = "spawn"
+        private const val BEB = "beb"
+        private const val RIFT = "rift"
+        private const val TIME = "t"
+
+
     }
 
 
@@ -43,6 +58,41 @@ internal class DragonApi {
         val body = httpClient.get(DRAGONS_URL).bodyAsText()
         val dragonResponse = jsonIgnore.decodeFromString(DragonResponseSerializer, body)
         return dragonResponse.dragons
+    }
+
+    @Throws(Exception::class)
+    suspend fun parentFinder(spawn: DragonData, beb: Boolean, rift: Boolean): List<DragonParent> {
+        val name = "${spawn.name}_Dragon"
+        val time = Clock.System.now().epochSeconds
+        val dragonHash = httpClient.get(PARENT_HASH_URL) {
+            url {
+                parameters.append(SPAWN, name)
+                parameters.append(BEB, if (beb) "1" else "0")
+                parameters.append(RIFT, if (rift) "1" else "0")
+                parameters.append(TIME, "$time")
+            }
+        }.body<DragonHash>()
+
+        val parentUrl = "$PARENT_URL/${dragonHash.hash}.json"
+        return httpClient.get(parentUrl).body()
+
+    }
+
+    @Throws(Exception::class)
+    suspend fun trendingParents(): List<String> {
+        return httpClient.get(TRENDING_PARENT_URL).body<List<String>>().map {
+            it.replace("_Dragon", "")
+        }
+    }
+
+    @Throws(Exception::class)
+    suspend fun checkForUpdates(): String {
+        val body = httpClient.get(GITHUB_URL) {
+            parameter("path", "dragons.js")
+            parameter("page", 1)
+            parameter("per_page", 1)
+        }.body<List<GithubResponse>>()
+        return body.first().commit.committer.date
     }
 
     // Can be used to cache images but takes up awhile to do so
@@ -81,16 +131,6 @@ internal class DragonApi {
                 )
             }
         }.awaitAll()
-    }
-
-    @Throws(Exception::class)
-    suspend fun checkForUpdates(): String {
-        val body = httpClient.get(GITHUB_URL) {
-            parameter("path", "dragons.js")
-            parameter("page", 1)
-            parameter("per_page", 1)
-        }.body<List<GithubResponse>>()
-        return body.first().commit.committer.date
     }
 
 

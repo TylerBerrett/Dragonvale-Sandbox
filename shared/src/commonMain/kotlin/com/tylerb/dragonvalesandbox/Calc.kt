@@ -313,7 +313,10 @@ internal object Calc {
         }
 
         spawn.forEach {
-            it.percent = (((weighted[it]!! / total) * 100) * 10).roundToInt() / 10.0
+            val percent = (((weighted[it]!! / total) * 100) * 10)
+            if (!percent.isNaN()) {
+                it.percent = percent.roundToInt() / 10.0
+            }
         }
 
         return spawn.filter { it.percent > 0.0 }
@@ -330,7 +333,7 @@ internal object Calc {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // format day:hour:min:sec
 
-    private fun fmtDhms(time: Double): String {
+    fun fmtDhms(time: Double): String {
 
         fun Int.format(): String = if (this in 0..9) "0$this" else "$this"
 
